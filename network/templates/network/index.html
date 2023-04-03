@@ -1,0 +1,106 @@
+{% extends "network/layout.html" %}
+
+{% block body %}
+        <script>
+            function getcooki(name){
+                const value = `; ${document.cookie}`;
+                const parts = value.split(`; ${name}=`);
+                if(parts.length == 2) return parts.pop().split(';').shift();
+            }
+
+            function submitHandler(id){
+                const textareaV = document.getElementById(`textarea_${id}`).value;
+                const content = document.getElementById(`content_${id}`);
+                const modal = document.getElementById(`modal_edit_${id}`);
+                fetch(`/edit/${id}`, {
+                    method : "POST", headers : {"Content-type" : "application.json", "x-CSRFToken" : getcooki("csrftoken")}, body : JSON.stringify({
+                        content : textareaV
+                    })}
+                )
+                .then(response => response.json())
+                .then(result => { 
+                            content.innerHTML = result.data;
+
+                            modal.classList.remove('show');
+                            modal.setAttribute('aria-hidden', 'true');
+                            modal.setAttribute('style', 'display: none');
+                            
+                            const modalsBackdrops = document.getElementsByClassName('modal-backdrop');
+
+                            
+                            for(let i=0; i<modalsBackdrops.length; i++) {
+                                document.body.removeChild(modalsBackdrops[i]);
+                        }})
+                    }
+
+            function LikeHandler(id, user_like){
+
+            }
+        </script>
+    <h1>All Posts</h1>
+    {% if user.is_authenticated %}
+       <div class=" post-form mx-4 my-6">
+        <br/>
+            <h3>New Post</h3>
+                <form action="{% url 'createpost' %}" method="POST">
+                    {% csrf_token %}
+                    <textarea name="content" rows="7" cols="120"></textarea>
+                    <br/>
+                    <input type="submit" value ="Post" class="btn btn-dark">
+                </form>
+                <br/>
+        </div>
+    {% endif %}
+
+    <div class="the-post">
+        {% for post in posts_in_page %}
+            <div class="row postt">
+                <h4 class="user_name"><a href="{% url 'profile' user_id=post.user.id %}">{{post.user }}</a></h4>
+                <h5 class="content" id="content_{{ post.id }}">{{ post.content }}</h5>
+                <p class="time">{{ post.time }}</p>  
+            {% if user.is_authenticated %}
+                    {% if user == post.user %}
+                        <div class="d-flex justify-content-aroud">
+                            <button class="btn btn-dark" type="button" data-toggle="modal" data-target="#modal_edit_{{ post.id }}">Edit</button>
+                        </div>
+                        <div class="modal fade" id="modal_edit_{{ post.id }}" tabindex="-1" role="dialog" aria-hidden="true" aria-labelledby="modal_edit_{{ post.id }}" >
+                            <div class="modal-dialog" role="document">
+                              <div class="modal-content">
+                                <div class="modal-header">
+                                  <h5 class="modal-title">Edit Post</h5>
+                                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                  </button>
+                                </div>
+                                <div class="modal-body">
+                                  <textarea class="form-control" rows="6" id="textarea_{{ post.id }}" name="content">{{ post.content }}</textarea>
+                                </div>
+                                <div class="modal-footer">
+                                  <button type="button" class="btn btn-primary" onclick="submitHandler({{ post.id }})">Save changes</button>
+                                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                    
+                    {% else %}
+                        {% if post.id in user_like %}
+                             <button class="btn btn-dark fa fa-thumbs-down col-2" id="{{ post.id }}"></button>
+                        {% else %}
+                             <button class="btn btn-dark fa fa-thumbs-up col-2" id="{{ post.id }}" onclick="LikeHandler({{ post.id }}, {{ user_like }})"></button>
+                        {% endif %}
+                    {% endif %}
+                {% endif %}
+            </div>
+        {% endfor %}
+        <nav aria-label="Page navigation example">
+            <ul class="pagination d-flex justify-content-center">
+                {% if posts_in_page.has_previous %}
+                     <li class="page-item"><a class="page-link" href="?page={{ posts_in_page.previous_page_num }}">Previous</a></li>
+                {% endif %}
+                {% if posts_in_page.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ posts_in_page.next_page_num }}">Next</a></li>
+                {% endif %}
+            </ul>
+          </nav>
+{% endblock %}

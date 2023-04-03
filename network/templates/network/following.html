@@ -1,0 +1,24 @@
+{% extends "network/layout.html" %}
+
+{% block body %}
+
+    <div class="the-post">
+        {% for post in posts_in_page %}
+            <div class="row postt">
+                <h4 class="user_name"><a href="{% url 'profile' user_id=post.user.id %}">{{post.user }}</a></h4>
+                <h5 class="content">{{ post.content }}</h5>
+                <p class="time">{{ post.time }}</p>
+            </div>
+        {% endfor %}
+    </div>
+    <nav aria-label="Page navigation example">
+        <ul class="pagination d-flex justify-content-center">
+            {% if posts_in_page.has_previous %}
+                 <li class="page-item"><a class="page-link" href="?page={{ posts_in_page.previous_page_num }}">Previous</a></li>
+            {% endif %}
+            {% if posts_in_page.has_next %}
+            <li class="page-item"><a class="page-link" href="?page={{ posts_in_page.next_page_num }}">Next</a></li>
+            {% endif %}
+        </ul>
+      </nav>
+{% endblock %}
